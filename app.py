@@ -3,13 +3,14 @@ import os
 import tempfile
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings, ChatOllama
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_classic.chains import RetrievalQA
-from langchain_core.prompts import PromptTemplate
+from langchain_groq import ChatGroq
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
 
 st.set_page_config(page_title="PDF RAG Assistant", page_icon="📄", layout="wide")
-st.title("📄 Local PDF RAG Assistant")
+st.title("📄 Cloud PDF RAG Assistant")
 
 with st.sidebar:
     st.header("Document Upload")
@@ -33,7 +34,7 @@ def process_pdf_and_create_chain(file_bytes):
     )
     chunks = text_splitter.split_documents(documents)
     
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     
     vectorstore = FAISS.from_documents(
         documents=chunks,
@@ -42,10 +43,10 @@ def process_pdf_and_create_chain(file_bytes):
     
     os.remove(temp_file_path)
     
-    llm = ChatOllama(
-        model="llama3.2",
-        temperature=0.3,
-        num_ctx=4096
+    llm = ChatGroq(
+        api_key=st.secrets["GROQ_API_KEY"],
+        model_name="llama3-8b-8192",
+        temperature=0.3
     )
     
     prompt_template = """You are a helpful assistant. Answer the question using only the following context.
